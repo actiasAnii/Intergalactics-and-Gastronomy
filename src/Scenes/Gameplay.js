@@ -57,7 +57,7 @@ class Gameplay extends Phaser.Scene {
         this.load.image("explode03", "explosion_3.png");
 
         //load stuff for background later
-        //maybe use tiled???
+        this.load.image("grassField", "GrassField.png");
 
         //load health
 
@@ -77,6 +77,9 @@ class Gameplay extends Phaser.Scene {
     create() {
         let my = this.my;
 
+        // add background
+        this.fieldBackground = this.add.tileSprite(0, 0, 640, 1280, "grassField").setOrigin(0).setScrollFactor(0, 1);
+
         // Create key objects
         this.left = this.input.keyboard.addKey("A");
         this.right = this.input.keyboard.addKey("D");
@@ -91,10 +94,7 @@ class Gameplay extends Phaser.Scene {
         my.sprite.chara.setScale(1.5);
         my.sprite.chara.scorePoints = 25;
 
-        //add additional enemies. can configure here?
-
-        // Notice that in this approach, we don't create any bullet sprites in create(),
-        // and instead wait until we need them, based on the number of space bar presses
+        //add additional enemies. can configure here? //think about adding every sprite to a group and adding each group to another group
 
         // Create white blow up animation
         this.anims.create({
@@ -137,6 +137,8 @@ class Gameplay extends Phaser.Scene {
 
     update() {
         let my = this.my;
+
+        this.fieldBackground.tilePositionY -= 5;
 
         my.sprite.player.update();
 

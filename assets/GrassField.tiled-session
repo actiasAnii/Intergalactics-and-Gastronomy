@@ -1,0 +1,22 @@
+{
+    "activeFile": "shmup_tiles_packed.tsx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "#platformer_tilemap_packed": {
+            "scaleInDock": 1
+        },
+        "shmup_tiles_packed.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        }
+    },
+    "openFiles": [
+        "shmup_tiles_packed.tsx"
+    ],
+    "project": "GrassField.tiled-project",
+    "recentFiles": [
+        "shmup_tiles_packed.tsx"
+    ]
+}

@@ -48,6 +48,7 @@ class ArrayBullet extends Phaser.Scene {
     update() {
         let my = this.my;
 
+        
         // Moving left
         if (this.left.isDown) {
             // Check to make sure the sprite can actually move left
