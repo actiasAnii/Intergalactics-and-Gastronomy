@@ -51,6 +51,7 @@ class Gameplay extends Phaser.Scene {
 
 
 
+        //
         //for death animation
         this.load.image("explode01", "explosion_1.png");
         this.load.image("explode02", "explosion_2.png");
@@ -86,13 +87,20 @@ class Gameplay extends Phaser.Scene {
         this.nextScene = this.input.keyboard.addKey("N");
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
+        /*
+        //initialize enemy groups
+        this.groupchara = this.add.group();
+        this.grouprigel = this.add.group();
+        this.groupenif = this.add.group();
+        this.grouppollux = this.add.group();
+        */
+
         //make player and enemy objects
         my.sprite.player = new Player(this, game.config.width/2, game.config.height - 40, "player1", null, this.left, this.right, 5);
         my.sprite.player.setScale(1.75);
 
-        my.sprite.chara = this.add.sprite(game.config.width/2, 60, "chara1"); //check how to randomize spawn location
+        my.sprite.chara = new Enemy(this, game.config.width/2, 10, "chara1", null, "pizza", 2, 3, 15);
         my.sprite.chara.setScale(1.5);
-        my.sprite.chara.scorePoints = 25;
 
         //add additional enemies. can configure here? //think about adding every sprite to a group and adding each group to another group
 
@@ -138,8 +146,10 @@ class Gameplay extends Phaser.Scene {
     update() {
         let my = this.my;
 
+        //scroll the background
         this.fieldBackground.tilePositionY -= 5;
 
+        //handle player movement
         my.sprite.player.update();
 
         // Check for bullet being fired
@@ -167,7 +177,7 @@ class Gameplay extends Phaser.Scene {
         // update() call. 
         my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
 
-        // Check for collision with the enemy
+        // Check for bullet collision with the enemy
         for (let bullet of my.sprite.bullet) {
             if (this.collides(my.sprite.chara, bullet)) {
                 // start animation
@@ -188,10 +198,17 @@ class Gameplay extends Phaser.Scene {
                 this.blowedUp.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
                     this.my.sprite.chara.visible = true;
                     this.my.sprite.chara.x = Math.random() * config.width;
+                    this.my.sprite.chara.y = 40;
                 }, this);
 
             }
         }
+
+        //handle behavior
+        my.sprite.chara.update();
+
+
+        //check for bullet collision with player
 
 
         // Make all of the bullets move
@@ -199,6 +216,8 @@ class Gameplay extends Phaser.Scene {
             bullet.y -= this.bulletSpeed;
         }
 
+
+        //temp testing scenes functional
         if (Phaser.Input.Keyboard.JustDown(this.nextScene)) {
             this.scene.start("endWin");
         }
@@ -225,9 +244,43 @@ class Gameplay extends Phaser.Scene {
 
         this.myScore = 0;
         this.updateScore();
-        this.my.sprite.player.x = game.config.width/2;
+        this.my.sprite.player.x = game.config.width/2; 
+
+        //probably add initial configuration for enemies? or generate it? once i get waves working
 
     }
 
 }
+/*
+/ Create the four groups to hold your different enemy types
+this.group1 = game.add.group();
+this.group2 = game.add.group();
+this.group3 = game.add.group();
+this.group4 = game.add.group();
+// Add an enemy into each group
+this.group1.create(x, y, "enemy1");
+this.group2.create(x, y, "enemy2");
+this.group3.create(x, y, "enemy3");
+this.group4.create(x, y, "enemy4");
+// Create the parent group for all enemies
+this.enemies = game.add.group();
+// Add each enemy group into the parent group
+this.enemies.add(this.group1);
+this.enemies.add(this.group2);
+this.enemies.add(this.group3);
+this.enemies.add(this.group4);
+// Create a function that you can call.  Pass it the enemy group (group1, group2, etc) for whatever group you want to perform on.  
+//Then do whatever you want inside the function. If you have more than one enemy in each group (for example, there are 3 enemies of the type in group1, 2 of the type in group2, etc)
+//modify the function to also accept an integer for the number of enemies you want to return.  O
+f course,  you'll probably want to create a list to add them to and return that, but this might be a good start for what you want?
+enemies.forEach(function(enemygroup){     // I'm not sure if you can check the name of the group.  If not, you can refer to the group by its index in the "enemies" group.
+    if (enemygroup.name == "group1") 
+        { 
+            // Get the first dead enemy in the group, assign it to the variable "selectedEnemy"
+            selectedEnemy = enemygroup.getFirstDead()
+            // Reset the position of the sprite for the enemy. Put it in the center of the game world
+            selectedEnemy.reset(game.world.centerX, game.world.centerY)}});
+//instead of adding sprite add new enemy of enemy class??
+//check where groups should be made (create?)
+*/
          
