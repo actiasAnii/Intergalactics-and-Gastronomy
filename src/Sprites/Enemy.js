@@ -8,10 +8,6 @@ class Enemy extends Phaser.GameObjects.Sprite
         //assign input values
         this.projectileTexture = projectileTexture;
         this.type = type;
-        
-        /*this.projSpeed = projSpeed;
-        this.enemyHealth = enemyHealth;
-        this.scorePoints = scorePoints;*/
 
 
         //handle enemy typing
@@ -19,7 +15,8 @@ class Enemy extends Phaser.GameObjects.Sprite
         {
             case 0:
                 this.projSpeed = 8;
-                this.enemyHealth = 1;
+                this.health = 1;
+                this.baseHealth = 1;
                 this.scorePoints = 30;
                 this.enemySpeed = 4000;
                 this.repeat = 0;
@@ -36,7 +33,8 @@ class Enemy extends Phaser.GameObjects.Sprite
 
             case 1:
                 this.projSpeed = 10;
-                this.enemyHealth = 2;
+                this.health = 2;
+                this.baseHealth = 2;
                 this.scorePoints = 15;
                 this.enemySpeed = 3000;
                 this.repeat = -1;
@@ -51,7 +49,8 @@ class Enemy extends Phaser.GameObjects.Sprite
 
             case 2:
                 this.projSpeed = 7;
-                this.enemyHealth = 2;
+                this.health = 2;
+                this.baseHealth = 2;
                 this.scorePoints = 25;
                 this.enemySpeed = 4500;
                 this.repeat = 0;
@@ -77,7 +76,8 @@ class Enemy extends Phaser.GameObjects.Sprite
 
             case 3:
                 this.projSpeed = 6;
-                this.enemyHealth = 3;
+                this.health = 3;
+                this.baseHealth = 3;
                 this.scorePoints = 10;
                 this.enemySpeed = 5500;
                 this.repeat = 0;
@@ -102,50 +102,10 @@ class Enemy extends Phaser.GameObjects.Sprite
         this.cooldown = 50;
 
 
-        //handle enemy type
-        this.curvepoint;
-        if (x <= this.scene.game.config.width)
-            {
-                this.curvepoint = scene.game.config.width/2 - 20;
-            }
-        else
-        {
-            this.curvepoint = -(scene.game.config.width/2 -20);
-        }
-
-
-        /*this.points = [
-            x, y,
-            x+this.curvepoint, scene.game.config.height/2,
-            x, scene.game.config.height+this.displayHeight
-
-
-        ];
-        this.points = [
-            x, y, 
-            x, this.displayHeight + scene.game.config.height
-
-        ];
-        this.points = [
-            x, y,
-            30, y,
-            scene.game.config.width - 30, y
-
-        ];
-        this.points = [
-            x, y,
-            scene.game.config.width - 20, scene.game.config.height/4,
-            20, scene.game.config.height/2,
-            scene.game.config.width - 20, scene.game.config.height/2 + scene.game.config.height/4,
-            x, scene.game.config.height + this.displayHeight
-
-        ];
-        */
-
-
         this.curve = new Phaser.Curves.Spline(this.points);
        
         this.my.sprite.enemy = scene.add.follower(this.curve, x, y, this.texture).setScale(1.5);
+        this.active = true; //change later for group addition
 
 
         return this;
@@ -214,10 +174,12 @@ class Enemy extends Phaser.GameObjects.Sprite
 
     makeActive()
     {
+        this.active = true;
         this.x = this.curve.points[0].x;
         this.y = this.curve.points[0].y;
         this.my.sprite.enemy.setPosition(this.curve.points[0].x, this.curve.points[0].y);
         this.my.sprite.enemy.visible = true;
+        this.health = this.baseHealth;
 
 
         this.my.sprite.enemy.startFollow({
@@ -239,6 +201,7 @@ class Enemy extends Phaser.GameObjects.Sprite
         this.my.sprite.enemy.stopFollow();
         this.my.sprite.enemy.visible = false;
         this.my.sprite.enemy.y = -100;
+        this.active = false;
 
 
     }

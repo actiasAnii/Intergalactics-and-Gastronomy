@@ -1,3 +1,5 @@
+myScore = 0
+
 class Gameplay extends Phaser.Scene {
     constructor()
     {
@@ -16,8 +18,6 @@ class Gameplay extends Phaser.Scene {
         // This array will hold bindings (pointers) to bullet sprites
         this.my.sprite.bullet = [];  
         this.maxBullets = 30;           // Don't create more than this many bullets
-       
-        this.myScore = 0;       // record a score as a class variable
     }
 
 
@@ -60,9 +60,6 @@ class Gameplay extends Phaser.Scene {
 
 
 
-
-
-
         //
         //for death animation
         this.load.image("explode01", "explosion_1.png");
@@ -77,18 +74,15 @@ class Gameplay extends Phaser.Scene {
         //load health
 
 
-        // Load the Kenny Rocket Square bitmap font
-        // This was converted from TrueType format into Phaser bitmap
-        // format using the BMFont tool.
-        // BMFont: https://www.angelcode.com/products/bmfont/
-        // Tutorial: https://dev.to/omar4ur/how-to-create-bitmap-fonts-for-phaser-js-with-bmfont-2ndc
-        this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
+        //load yummy new font
+        this.load.bitmapFont("minogram", "minogram_6x10.png", "minogram_6x10.xml");
 
 
         // Sound assets
         this.load.audio("playerShoot", "laserSmall_004.ogg");
         this.load.audio("enemyShoot", "laserSmall_000.ogg");
         this.load.audio("deathNoise", "explosionCrunch_000.ogg");
+        this.load.audio("enemyHit", "forceField_002.ogg");
     }
 
 
@@ -152,7 +146,7 @@ class Gameplay extends Phaser.Scene {
 
 
         // Put score on screen
-        my.text.score = this.add.bitmapText(460, 0, "rocketSquare", ("00000" + this.myScore).slice(-5));
+        my.text.score = this.add.bitmapText(game.config.width-10, 30, "minogram", ("00000" + myScore).slice(-5)).setOrigin(1).setScale(2.5);
 
 
         // Put title on screen
@@ -215,19 +209,21 @@ class Gameplay extends Phaser.Scene {
 
         // Check for bullet collision with the enemy
         for (let bullet of my.sprite.bullet) {
-            if (this.collides(my.sprite.chara, bullet)) {
+            if (this.collides(my.sprite.chara, bullet) && my.sprite.chara.active == true) {
+                my.sprite.chara.health --;
+                bullet.y = -100;
+                this.sound.play("enemyHit", {volume: 0.05});
+                //if collision reduces enemy health to 0
+                if (my.sprite.chara.health == 0){
                 // start animation
                 this.blowedUp = this.add.sprite(my.sprite.chara.x, my.sprite.chara.y, "explode01").setScale(1.75).play("blowedUp");
                 // clear out bullet -- put y offscreen, will get reaped next update
-                bullet.y = -100;
                 my.sprite.chara.makeInactive();
                 // Update score
-                this.myScore += my.sprite.chara.scorePoints;
+                myScore += my.sprite.chara.scorePoints;
                 this.updateScore();
                 // Play sound
-                this.sound.play("deathNoise", {
-                    volume: 0.25   // Can adjust volume using this, goes from 0 to 1
-                });
+                this.sound.play("deathNoise", {volume: 0.25});
                 // Have new enemy appear after end of animation
                 //alter for my enemy waves
                 //make this part of the enemy class probably urghghghhghghhghghghh
@@ -235,7 +231,8 @@ class Gameplay extends Phaser.Scene {
                     my.sprite.chara.makeActive();
 
 
-                }, this); //handle here
+                }, this);
+            }
 
 
             }
@@ -272,7 +269,7 @@ class Gameplay extends Phaser.Scene {
     updateScore()
     {
         let my = this.my;
-        my.text.score.setText(("00000" + this.myScore).slice(-5));
+        my.text.score.setText(("00000" + myScore).slice(-5));
     }
 
 
@@ -281,7 +278,7 @@ class Gameplay extends Phaser.Scene {
         let my = this.my;
 
 
-        this.myScore = 0;
+        myScore = 0;
         this.updateScore();
         this.my.sprite.player.x = game.config.width/2;
 

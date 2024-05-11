@@ -14,9 +14,13 @@ class EndLose extends Phaser.Scene {
     {
         let my = this.my;
 
+        this.fieldBackground = this.add.tileSprite(0, 0, 640, 1280, "grassField").setOrigin(0);
+
         this.nextScene = this.input.keyboard.addKey("N");
 
-        my.text.won = this.add.bitmapText(400, 0, "rocketSquare", "you lost!");
+        my.text.won = this.add.bitmapText(game.config.width/2, game.config.height/2 - 200, "minogram", "YOU LOST").setOrigin(0.5).setScale(4);
+        my.text.reportScoreL = this.add.bitmapText(game.config.width/2, game.config.height/2, "minogram", "SCORE: " + ("00000" + myScore).slice(-5)).setOrigin(0.5).setScale(2.5);
+        my.text.playAgainL = this.add.bitmapText(game.config.width/2, game.config.height/2 + 200, "minogram", "press N to play again!").setOrigin(0.5).setScale(2.5);
 
     }
 
