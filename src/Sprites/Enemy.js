@@ -2,24 +2,27 @@ class Enemy extends Phaser.GameObjects.Sprite
 {
     curve;
     path;
-    constructor(scene, x, y, texture, frame, projectileTexture, type) //can handle most of these in a type switch!!
+    constructor(scene, x, y, texture, frame, projectileTexture, type, offset) //can handle most of these in a type switch!!
     {
         super(scene, x, y, texture, frame);
         //assign input values
         this.projectileTexture = projectileTexture;
         this.type = type;
+        this.active = false;
+        this.offset = offset;
 
 
         //handle enemy typing
         switch(type)
         {
-            case 0:
+            case 0: //chara
                 this.projSpeed = 8;
                 this.health = 1;
                 this.baseHealth = 1;
                 this.scorePoints = 30;
-                this.enemySpeed = 4000;
+                this.enemySpeed = Phaser.Math.Between(6500, 8000);
                 this.repeat = 0;
+                this.yoyo = false;
 
                 this.points = [
                     x, y,
@@ -31,32 +34,34 @@ class Enemy extends Phaser.GameObjects.Sprite
                 ];
                 break;
 
-            case 1:
+            case 1: //rigel
                 this.projSpeed = 10;
                 this.health = 2;
                 this.baseHealth = 2;
                 this.scorePoints = 15;
-                this.enemySpeed = 3000;
+                this.enemySpeed = Phaser.Math.Between(2500, 3500);
                 this.repeat = -1;
+                this.yoyo = true;
 
                 this.points = [
-                    30, y,
-                    scene.game.config.width - 30, y
+                    30, y+50,
+                    scene.game.config.width - 30, y+50
         
                 ];
                 break;
 
 
-            case 2:
+            case 2: //enif
                 this.projSpeed = 7;
                 this.health = 2;
                 this.baseHealth = 2;
                 this.scorePoints = 25;
-                this.enemySpeed = 4500;
+                this.enemySpeed = Phaser.Math.Between(6500, 9000);
                 this.repeat = 0;
+                this.yoyo = false;
 
                 this.curvepoint;
-                if (x <= this.scene.game.config.width)
+                if (x <= scene.game.config.width/2)
                 {
                     this.curvepoint = scene.game.config.width/2 - 20;
                 }
@@ -68,19 +73,20 @@ class Enemy extends Phaser.GameObjects.Sprite
                 this.points = [
                 x, y,
                 x+this.curvepoint, scene.game.config.height/2,
-                x, scene.game.config.height+this.displayHeight
+                x+(this.curvepoint/2), scene.game.config.height+this.displayHeight
                 ];
                 
                  break;
 
 
-            case 3:
+            case 3: //pollux
                 this.projSpeed = 6;
-                this.health = 3;
+                this.health = 2;
                 this.baseHealth = 3;
                 this.scorePoints = 10;
-                this.enemySpeed = 5500;
+                this.enemySpeed = Phaser.Math.Between(8000, 10000);
                 this.repeat = 0;
+                this.yoyo = false;
 
                 this.points = [
                     x, y, 
@@ -92,20 +98,20 @@ class Enemy extends Phaser.GameObjects.Sprite
 
 
 
-        //set up for sprite and projectile array
-        //
+        //set up for projectile array
         this.my = {sprite: {}};
         this.my.sprite.projectile = [];  
         this.maxproj = 20;
 
+        this.cooldown = Phaser.Math.Between(35, 60);
 
-        this.cooldown = 50;
-
-
+        //make appropriate curve and add sprite as follower
         this.curve = new Phaser.Curves.Spline(this.points);
        
         this.my.sprite.enemy = scene.add.follower(this.curve, x, y, this.texture).setScale(1.5);
-        this.active = true; //change later for group addition
+
+        this.my.sprite.enemy.active = false;
+        this.my.sprite.enemy.visible = false;
 
 
         return this;
@@ -118,12 +124,18 @@ class Enemy extends Phaser.GameObjects.Sprite
     {
         let my = this.my;
 
-
-        this.cooldown--;
-
+        //make projectiles move, even if enemy isnt active anymore
+        for (let projectile of my.sprite.projectile) {
+            projectile.y += this.projSpeed;
+        }
 
         this.x = my.sprite.enemy.x;
         this.y = my.sprite.enemy.y;
+
+        if (this.active == true){
+
+        //reduce cooldown
+        this.cooldown--;
 
 
         //make enemy shoot!
@@ -143,14 +155,6 @@ class Enemy extends Phaser.GameObjects.Sprite
             }
 
 
-
-
-        //make projectiles move
-        for (let projectile of my.sprite.projectile) {
-            projectile.y += this.projSpeed; //maybe make projectile speed variants??
-        }
-
-
         //remove invalid projectiles
         my.sprite.projectile = my.sprite.projectile.filter((projectile) => {
             if (projectile.y >= this.scene.game.config.height + this.displayHeight/2)
@@ -159,13 +163,13 @@ class Enemy extends Phaser.GameObjects.Sprite
                 }
             return projectile.y < this.scene.game.config.height + this.displayHeight/2;
         });
+        }
 
         //make inactive if outside of bounds
 
         if (this.y >= this.scene.game.config.height + this.displayHeight/2)
             {
                 this.makeInactive();
-                this.makeActive();
             }
 
 
@@ -174,6 +178,7 @@ class Enemy extends Phaser.GameObjects.Sprite
 
     makeActive()
     {
+        this.my.sprite.enemy.active = true;
         this.active = true;
         this.x = this.curve.points[0].x;
         this.y = this.curve.points[0].y;
@@ -189,7 +194,7 @@ class Enemy extends Phaser.GameObjects.Sprite
             duration: this.enemySpeed,
             ease: 'Quadratic.easeInOut',
             repeat: this.repeat,
-            yoyo: true,
+            yoyo: this.yoyo,
            });
 
 
@@ -198,10 +203,11 @@ class Enemy extends Phaser.GameObjects.Sprite
 
     makeInactive()
     {
+        this.my.sprite.enemy.active = false;
+        this.active = false;
         this.my.sprite.enemy.stopFollow();
         this.my.sprite.enemy.visible = false;
         this.my.sprite.enemy.y = -100;
-        this.active = false;
 
 
     }

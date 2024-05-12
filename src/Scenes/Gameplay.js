@@ -15,6 +15,17 @@ class Gameplay extends Phaser.Scene {
         //initialize bullet array
         this.my.sprite.bullet = [];  
         this.maxBullets = 30;
+
+        //configure arrays for waves of enemies
+        this.waves = [
+            //format: [#charas, #rigels, #enifs, #polluxes]
+            [0, 1, 0, 4], //wave 0
+            [2, 1, 1, 0], //wave 1
+            [1, 0, 2, 3], //wave 2
+            [2, 2, 2, 2], //wave 3
+
+        ];
+        this.waveNum = 0;
     }
 
 
@@ -40,8 +51,6 @@ class Gameplay extends Phaser.Scene {
         this.load.image("rigel1", "enemy_rigel_1.png");
         this.load.image("rigel2", "enemy_rigel_2.png");
         this.load.image("sushi", "bullet_sushi.png");
-
-
 
 
         //enif animation + projectile
@@ -98,7 +107,7 @@ class Gameplay extends Phaser.Scene {
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
 
-        //make player and enemy objects
+        //make player objects
         my.sprite.player = new Player(this, game.config.width/2, game.config.height - 40, "player1", null, this.left, this.right, 5);
         my.sprite.player.setScale(1.75);
 
@@ -115,22 +124,22 @@ class Gameplay extends Phaser.Scene {
         my.enemies = this.add.group();
 
         //add enemies to each group and add groups to enemies
-        this.createEnemies("chara1", "pizza", 0, my.sprite.charas, 10);
-        this.createEnemies("rigel1", "sushi", 1, my.sprite.rigels, 10 );
-        this.createEnemies("enif1", "musubi", 2, my.sprite.enifs, 10);
+        this.createEnemies("chara1", "pizza", 0, my.sprite.charas, 5);
+        this.createEnemies("rigel1", "sushi", 1, my.sprite.rigels, 5);
+        this.createEnemies("enif1", "musubi", 2, my.sprite.enifs, 5);
         this.createEnemies("pollux1", "burger", 3, my.sprite.polluxs, 10);
 
         my.enemies.addMultiple([my.sprite.charas, my.sprite.rigels, my.sprite.enifs, my.sprite.polluxs]);
 
-        my.enemies.getChildren().forEach((enemyGroup) => {
-            my.sprite.test = this.getFirstIA(enemyGroup); 
-            if (my.sprite.test != null){
-                my.sprite.test.makeActive();
-
-            } else{
-                console.log("failed...")
-            }
-            });
+        //create first wave of enemies
+         for (let i = 0; i < 4 ; i++){
+            my.sprite.temp = my.enemies.getChildren()[i];
+            for (let j = 0; j < this.waves[this.waveNum][i]; j++)
+                {
+                    my.sprite.temp.getChildren()[j].makeActive();
+                }
+         }
+         
 
         // Create white blow up animation
         this.anims.create({
@@ -156,7 +165,8 @@ class Gameplay extends Phaser.Scene {
 
 
         // Put score on screen
-        my.text.score = this.add.bitmapText(game.config.width-10, 30, "minogram", ("00000" + myScore).slice(-5)).setOrigin(1).setScale(2.5);
+        my.text.score = this.add.bitmapText(game.config.width-10, 40, "minogram", ("00000" + myScore).slice(-5)).setOrigin(1).setScale(3).setLetterSpacing(1);
+        // Put Wave on screen
 
         //init to reset game values
         this.init_game();
@@ -166,21 +176,16 @@ class Gameplay extends Phaser.Scene {
 
     createEnemies(texture, projectileTexture, type, group, count)
     {
-        console.log('Creating enemies...');
         for (let i = 0; i < count; i++)
             {
-                    let enemy = new Enemy(this, Phaser.Math.Between(30, game.config.width - 30), 30, texture, null, projectileTexture, type);
-                    if (enemy) {
-                        group.add(enemy);
-                        console.log('Enemy added to group');
-                    } else {
-                        console.log('Failed to create enemy.');
-                    }
+                    let enemy = new Enemy(this, Phaser.Math.Between(30, game.config.width - 30), -10, texture, null, projectileTexture, type, Phaser.Math.Between(0, 10));
+                    group.add(enemy);
             }
 
     }
 
     //omfg it works thank fucking god
+    //get first inactive enemy in the group
     getFirstIA(group)
     {
         for (let enemy of group.getChildren()) {
@@ -189,6 +194,28 @@ class Gameplay extends Phaser.Scene {
         }
     }
     return null; // Return null if no inactive enemy is found
+    }
+
+    //get the first active enemy in the group
+    getFirstA(group)
+    {
+        for (let enemy of group.getChildren()) {
+        if (enemy.active) {
+            return enemy; // Return the first active enemy
+        }
+    }
+    return null; // Return null if no inactive enemy is found
+    }
+
+    allIA()
+    {
+        for (let enemyGroup of this.my.enemies.getChildren()){
+            if (this.getFirstA(enemyGroup))
+                {
+                    return false;
+                }
+        }
+        return true;
     }
 
 
@@ -247,19 +274,17 @@ class Gameplay extends Phaser.Scene {
                             // start animation
                             this.blowedUp = this.add.sprite(enemy.x, enemy.y, "explode01").setScale(1.75).play("blowedUp");
                             // clear out bullet -- put y offscreen, will get reaped next update
-                            my.sprite.hehe = this.getFirstIA(enemyGroup);
                             enemy.makeInactive();
                             // Update score
                             myScore += enemy.scorePoints;
                             this.updateScore();
                             // Play sound
                             this.sound.play("deathNoise", {volume: 0.25});
-                            // Have new enemy appear after end of animation
-                            //alter for my enemy waves
-                            this.blowedUp.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                                my.sprite.hehe.makeActive();
+                            // Have new enemy appear after end of animation -> alter once waves implemented
+                            /*this.blowedUp.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                                enemyGroup.getChildren()[Phaser.Math.Between(0, 10)].makeActive();
                             }, 
-                            this);}}
+                        this);*/}}
                             }
              });
         }
@@ -273,18 +298,22 @@ class Gameplay extends Phaser.Scene {
 
         //check for enemy projectile collision with player
 
-
+        //move player bullet
         for (let bullet of my.sprite.bullet) {
             bullet.y -= this.bulletSpeed;
         }
 
 
         //temp testing scenes transitions
-        if (Phaser.Input.Keyboard.JustDown(this.nextScene)) {
+        if (Phaser.Input.Keyboard.JustDown(this.nextScene)) 
+        {
             this.scene.start("endWin");
         }
 
-
+        if (this.allIA()){
+            this.updateWave();
+        }
+        
     }
 
 
@@ -303,6 +332,23 @@ class Gameplay extends Phaser.Scene {
         my.text.score.setText(("00000" + myScore).slice(-5));
     }
 
+    updateWave()
+    {
+        let my = this.my;
+
+        console.log("starting next wave!")
+            this.waveNum++;
+            for (let i = 0; i < 4 ; i++){
+                my.sprite.temp = my.enemies.getChildren()[i];
+                for (let j = 0; j < this.waves[this.waveNum][i]; j++)
+                    {
+                        my.sprite.temp.getChildren()[j].makeActive();
+                    }
+             }
+    }
+
+
+
 
     init_game()
     {
@@ -314,9 +360,8 @@ class Gameplay extends Phaser.Scene {
         this.my.sprite.player.x = game.config.width/2;
 
 
-        //probably add initial configuration for enemies? or generate it? once i get waves working
-
-
+        //potentially reset enemy positions
+        this.waveNum = 0;
     }
 
 }
