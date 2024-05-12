@@ -12,12 +12,9 @@ class Gameplay extends Phaser.Scene {
         //  - "text"   holds bindings to created bitmap text objects
         this.my = {sprite: {}, text: {}};
 
-
-        // Create a property inside "sprite" named "bullet".
-        // The bullet property has a value which is an array.
-        // This array will hold bindings (pointers) to bullet sprites
+        //initialize bullet array
         this.my.sprite.bullet = [];  
-        this.maxBullets = 30;           // Don't create more than this many bullets
+        this.maxBullets = 30;
     }
 
 
@@ -67,7 +64,7 @@ class Gameplay extends Phaser.Scene {
         this.load.image("explode03", "explosion_3.png");
 
 
-        //load stuff for background later
+        //load background image
         this.load.image("grassField", "GrassField.png");
 
 
@@ -78,7 +75,7 @@ class Gameplay extends Phaser.Scene {
         this.load.bitmapFont("minogram", "minogram_6x10.png", "minogram_6x10.xml");
 
 
-        // Sound assets
+        //load sound assets
         this.load.audio("playerShoot", "laserSmall_004.ogg");
         this.load.audio("enemyShoot", "laserSmall_000.ogg");
         this.load.audio("deathNoise", "explosionCrunch_000.ogg");
@@ -101,26 +98,39 @@ class Gameplay extends Phaser.Scene {
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
 
-        /*
-        //initialize enemy groups
-        this.groupchara = this.add.group();
-        this.grouprigel = this.add.group();
-        this.groupenif = this.add.group();
-        this.grouppollux = this.add.group();
-        */
-
-
         //make player and enemy objects
         my.sprite.player = new Player(this, game.config.width/2, game.config.height - 40, "player1", null, this.left, this.right, 5);
         my.sprite.player.setScale(1.75);
 
 
-        my.sprite.chara = new Enemy(this, game.config.width/2, 30, "chara1", null, "pizza", 3);
-        my.sprite.chara.makeActive();
+        //my.sprite.chara = new Enemy(this, game.config.width/2, 30, "chara1", null, "pizza", 3);
+        //my.sprite.chara.makeActive();
+        //make groups
+        //initialize groups
+        my.sprite.charas = this.add.group();
+        my.sprite.rigels = this.add.group();
+        my.sprite.enifs = this.add.group();
+        my.sprite.polluxs = this.add.group();
 
+        my.enemies = this.add.group();
 
-        //add additional enemies. can configure here? //think about adding every sprite to a group and adding each group to another group
+        //add enemies to each group and add groups to enemies
+        this.createEnemies("chara1", "pizza", 0, my.sprite.charas, 10);
+        this.createEnemies("rigel1", "sushi", 1, my.sprite.rigels, 10 );
+        this.createEnemies("enif1", "musubi", 2, my.sprite.enifs, 10);
+        this.createEnemies("pollux1", "burger", 3, my.sprite.polluxs, 10);
 
+        my.enemies.addMultiple([my.sprite.charas, my.sprite.rigels, my.sprite.enifs, my.sprite.polluxs]);
+
+        my.enemies.getChildren().forEach((enemyGroup) => {
+            my.sprite.test = this.getFirstIA(enemyGroup); 
+            if (my.sprite.test != null){
+                my.sprite.test.makeActive();
+
+            } else{
+                console.log("failed...")
+            }
+            });
 
         // Create white blow up animation
         this.anims.create({
@@ -148,26 +158,42 @@ class Gameplay extends Phaser.Scene {
         // Put score on screen
         my.text.score = this.add.bitmapText(game.config.width-10, 30, "minogram", ("00000" + myScore).slice(-5)).setOrigin(1).setScale(2.5);
 
-
-        // Put title on screen
-        /*
-        this.add.text(10, 5, "Hippo Hug!", {
-            fontFamily: 'Times, serif',
-            fontSize: 24,
-            wordWrap: {
-                width: 60
-            }
-        });
-        */
-
-
         //init to reset game values
         this.init_game();
 
 
     }
 
+    createEnemies(texture, projectileTexture, type, group, count)
+    {
+        console.log('Creating enemies...');
+        for (let i = 0; i < count; i++)
+            {
+                    let enemy = new Enemy(this, Phaser.Math.Between(30, game.config.width - 30), 30, texture, null, projectileTexture, type);
+                    if (enemy) {
+                        group.add(enemy);
+                        console.log('Enemy added to group');
+                    } else {
+                        console.log('Failed to create enemy.');
+                    }
+            }
 
+    }
+
+    //omfg it works thank fucking god
+    getFirstIA(group)
+    {
+        for (let enemy of group.getChildren()) {
+        if (!enemy.active) {
+            return enemy; // Return the first inactive enemy
+        }
+    }
+    return null; // Return null if no inactive enemy is found
+    }
+
+
+
+    //add iteratives
     update() {
         let my = this.my;
 
@@ -207,38 +233,45 @@ class Gameplay extends Phaser.Scene {
         my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
 
 
+        //evilest
         // Check for bullet collision with the enemy
         for (let bullet of my.sprite.bullet) {
-            if (this.collides(my.sprite.chara, bullet) && my.sprite.chara.active == true) {
-                my.sprite.chara.health --;
-                bullet.y = -100;
-                this.sound.play("enemyHit", {volume: 0.05});
-                //if collision reduces enemy health to 0
-                if (my.sprite.chara.health == 0){
-                // start animation
-                this.blowedUp = this.add.sprite(my.sprite.chara.x, my.sprite.chara.y, "explode01").setScale(1.75).play("blowedUp");
-                // clear out bullet -- put y offscreen, will get reaped next update
-                my.sprite.chara.makeInactive();
-                // Update score
-                myScore += my.sprite.chara.scorePoints;
-                this.updateScore();
-                // Play sound
-                this.sound.play("deathNoise", {volume: 0.25});
-                // Have new enemy appear after end of animation
-                //alter for my enemy waves
-                //make this part of the enemy class probably urghghghhghghhghghghh
-                this.blowedUp.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
-                    my.sprite.chara.makeActive();
-
-
-                }, this);
-            }
-
-
-            }
+            my.enemies.getChildren().forEach((enemyGroup) => {
+                for (let enemy of enemyGroup.getChildren()) {
+                    if (enemy.active == true && this.collides(enemy, bullet)) {
+                        enemy.health--;
+                        bullet.y = -100;
+                        this.sound.play("enemyHit", {volume: 0.1});
+                        //if collision reduces enemy health to 0
+                        if (enemy.health == 0){
+                            // start animation
+                            this.blowedUp = this.add.sprite(enemy.x, enemy.y, "explode01").setScale(1.75).play("blowedUp");
+                            // clear out bullet -- put y offscreen, will get reaped next update
+                            my.sprite.hehe = this.getFirstIA(enemyGroup);
+                            enemy.makeInactive();
+                            // Update score
+                            myScore += enemy.scorePoints;
+                            this.updateScore();
+                            // Play sound
+                            this.sound.play("deathNoise", {volume: 0.25});
+                            // Have new enemy appear after end of animation
+                            //alter for my enemy waves
+                            this.blowedUp.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                                my.sprite.hehe.makeActive();
+                            }, 
+                            this);}}
+                            }
+             });
         }
 
-        my.sprite.chara.update(); //FUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU
+        //run enemy update function
+        my.enemies.getChildren().forEach((enemyGroup) => {
+            for (let enemy of enemyGroup.getChildren()) {
+                enemy.update();
+            }
+        });
+
+        //check for enemy projectile collision with player
 
 
         for (let bullet of my.sprite.bullet) {
@@ -246,9 +279,7 @@ class Gameplay extends Phaser.Scene {
         }
 
 
-
-
-        //temp testing scenes functional
+        //temp testing scenes transitions
         if (Phaser.Input.Keyboard.JustDown(this.nextScene)) {
             this.scene.start("endWin");
         }
@@ -288,40 +319,7 @@ class Gameplay extends Phaser.Scene {
 
     }
 
-
 }
-/*
-/ Create the four groups to hold your different enemy types
-this.group1 = game.add.group();
-this.group2 = game.add.group();
-this.group3 = game.add.group();
-this.group4 = game.add.group();
-// Add an enemy into each group
-this.group1.create(x, y, "enemy1");
-this.group2.create(x, y, "enemy2");
-this.group3.create(x, y, "enemy3");
-this.group4.create(x, y, "enemy4");
-// Create the parent group for all enemies
-this.enemies = game.add.group();
-// Add each enemy group into the parent group
-this.enemies.add(this.group1);
-this.enemies.add(this.group2);
-this.enemies.add(this.group3);
-this.enemies.add(this.group4);
-// Create a function that you can call.  Pass it the enemy group (group1, group2, etc) for whatever group you want to perform on.  
-//Then do whatever you want inside the function. If you have more than one enemy in each group (for example, there are 3 enemies of the type in group1, 2 of the type in group2, etc)
-//modify the function to also accept an integer for the number of enemies you want to return.  O
-f course,  you'll probably want to create a list to add them to and return that, but this might be a good start for what you want?
-enemies.forEach(function(enemygroup){     // I'm not sure if you can check the name of the group.  If not, you can refer to the group by its index in the "enemies" group.
-    if (enemygroup.name == "group1")
-        {
-            // Get the first dead enemy in the group, assign it to the variable "selectedEnemy"
-            selectedEnemy = enemygroup.getFirstDead()
-            // Reset the position of the sprite for the enemy. Put it in the center of the game world
-            selectedEnemy.reset(game.world.centerX, game.world.centerY)}});
-//instead of adding sprite add new enemy of enemy class??
-//check where groups should be made (create?)
-*/
        
 
          
