@@ -1,14 +1,16 @@
+//global variables holding current score and high score, displayed on end/win screens
 myScore = 0;
 highScore = 0;
 
+//main gameplay scene
 class Gameplay extends Phaser.Scene {
     constructor()
     {
         super("gameplay");
 
 
-        // Initialize a class variable "my" which is an object.
-        // The object has two properties, both of which are objects
+        // initialize a class variable "my" which is an object
+        // the object has two properties, both of which are objects
         //  - "sprite" holds bindings (pointers) to created sprites
         //  - "text"   holds bindings to created bitmap text objects
         this.my = {sprite: {}, text: {}};
@@ -17,14 +19,16 @@ class Gameplay extends Phaser.Scene {
         this.my.sprite.bullet = [];  
         this.maxBullets = 30;
 
-        //initialize hp arrays
+        //initialize hp displaying arrays
         this.my.sprite.fullHearts = [];
         this.my.sprite.emptyHearts = [];
 
-        //configure arrays for waves of enemies
-        this.waveNum = 0;
+        //store current wave
+        this.waveNum = 0; 
+
+        //create matrix holding enemy wave configurations
         this.waves = [
-            //format: [#charas, #rigels, #enifs, #polluxes]
+            //format: [# of charas, # of rigels, # of enifs, # of polluxes]
             [0, Phaser.Math.Between(0, 1), 0, Phaser.Math.Between(2, 5)], //wave 0
             [Phaser.Math.Between(0, 2), Phaser.Math.Between(1, 2), 1, 0], //wave 1
             [Phaser.Math.Between(1, 2), Phaser.Math.Between(0, 1), Phaser.Math.Between(1, 2), Phaser.Math.Between(1, 2)], //wave 2
@@ -32,12 +36,13 @@ class Gameplay extends Phaser.Scene {
 
         ];
 
-        //configure points for winflag to travel
-        this.winPoints = [
+        //configure points for the winflag path
+        this.winPoints = [ //descends down center of screen to just above player y
             game.config.width/2, -20,
             game.config.width/2, game.config.height - 100
         ];
 
+        //game is not in the middle of an ending sequence
         this.gameEnd = false;
     }
 
@@ -48,71 +53,62 @@ class Gameplay extends Phaser.Scene {
         this.load.setPath("./assets/");
 
 
-        //player animation + bullet
+        //player + bullet
         this.load.image("player1", "player_1.png");
-        this.load.image("player2", "player_2.png");
         this.load.image("donut", "bullet_donut.png");
 
 
-        //chara animation + projectile
+        //chara + projectile
         this.load.image("chara1", "enemy_chara_1.png");
-        this.load.image("chara2", "enemy_chara_2.png");
         this.load.image("pizza", "bullet_pizza.png");
 
 
-        //rigel animation + projectile
+        //rigel + projectile
         this.load.image("rigel1", "enemy_rigel_1.png");
-        this.load.image("rigel2", "enemy_rigel_2.png");
         this.load.image("sushi", "bullet_sushi.png");
 
 
-        //enif animation + projectile
+        //enif + projectile
         this.load.image("enif1", "enemy_enif_1.png");
-        this.load.image("enif2", "enemy_enif_2.png");
         this.load.image("musubi", "bullet_musubi.png");
 
 
-        //pollux animation + projectile
+        //pollux + projectile
         this.load.image("pollux1", "enemy_pollux_1.png");
-        this.load.image("pollux2", "enemy_pollux_2.png");
         this.load.image("burger", "bullet_burger.png");
 
 
-
-        //
-        //for death animation
+        //enemy death animation frames
         this.load.image("explode01", "explosion_1.png");
         this.load.image("explode02", "explosion_2.png");
         this.load.image("explode03", "explosion_3.png");
 
 
-        //load background image
+        //background image
         this.load.image("grassField", "GrassField.png");
 
 
-        //load health
+        //health bar
         this.load.image("healthEmpty", "health_empty.png");
-        this.load.image("healthHalf", "health_half.png");
         this.load.image("healthFull", "health_full.png");
 
-        //load flags
+        //flag animation frames
         this.load.image("flag1", "bg_flag_1.png");
         this.load.image("flag2", "bg_flag_2.png");
 
-
-        //load yummy new font
+        //yummy new font
         this.load.bitmapFont("minogram", "minogram_6x10.png", "minogram_6x10.xml");
 
 
-        //load sound assets
-        this.load.audio("playerShoot", "laserSmall_004.ogg");
-        this.load.audio("enemyShoot", "laserSmall_000.ogg");
-        this.load.audio("enemyDie", "explosionCrunch_000.ogg");
-        this.load.audio("enemyHit", "jingles_NES14.ogg");
-        this.load.audio("playerHit", "jingles_NES05.ogg");
-        this.load.audio("waveStart", "jingles_NES16.ogg");
-        this.load.audio("lostSound", "jingles_NES00.ogg");
-        this.load.audio("wonSound", "jingles_NES08.ogg");
+        //sound assets
+        this.load.audio("playerShoot", "laserSmall_004.ogg"); //sound that plays when player fires
+        this.load.audio("enemyShoot", "laserSmall_000.ogg"); //sound that plays when enemy fires
+        this.load.audio("enemyDie", "explosionCrunch_000.ogg"); //sound that plays during enemy death animation
+        this.load.audio("enemyHit", "jingles_NES14.ogg"); //sound that plays when enemy is hit by a player bullet
+        this.load.audio("playerHit", "jingles_NES05.ogg"); //sound that plays when player is hit by a enemy projectile
+        this.load.audio("waveStart", "jingles_NES16.ogg"); //sound that plays when a new wave starts
+        this.load.audio("lostSound", "jingles_NES00.ogg"); //sound that plays when transitioning to the lose screen
+        this.load.audio("wonSound", "jingles_NES08.ogg"); //sound that plays when transitioning to the win screen 
     }
 
 
@@ -120,38 +116,39 @@ class Gameplay extends Phaser.Scene {
         let my = this.my;
 
 
-        // add background
+        //add background
         this.fieldBackground = this.add.tileSprite(0, 0, 640, 1280, "grassField").setOrigin(0).setScrollFactor(0, 1);
 
 
-        // Create key objects
+        //create key objects
         this.left = this.input.keyboard.addKey("A");
         this.right = this.input.keyboard.addKey("D");
         this.nextScene = this.input.keyboard.addKey("N");
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
 
-        //make player objects
-        my.sprite.player = new Player(this, game.config.width/2, game.config.height - 40, "player1", null, this.left, this.right, 7);
-        my.sprite.player.setScale(1.75);
+        //make player object
+        my.sprite.player = new Player(this, game.config.width/2, game.config.height - 40, "player1", null, this.left, this.right, 7).setScale(1.75);
 
-        //initialize groups
+        //initialize enemy groups
         my.sprite.charas = this.add.group();
         my.sprite.rigels = this.add.group();
         my.sprite.enifs = this.add.group();
         my.sprite.polluxs = this.add.group();
 
+        //initialize group of all enemy type groups
         my.enemies = this.add.group();
 
-        //add enemies to each group and add groups to enemies
+        //add enemies to each group
         this.createEnemies("chara1", "pizza", 0, my.sprite.charas, 5);
         this.createEnemies("rigel1", "sushi", 1, my.sprite.rigels, 5);
         this.createEnemies("enif1", "musubi", 2, my.sprite.enifs, 5);
         this.createEnemies("pollux1", "burger", 3, my.sprite.polluxs, 10);
 
+        //add groups to enemies
         my.enemies.addMultiple([my.sprite.charas, my.sprite.rigels, my.sprite.enifs, my.sprite.polluxs]);
 
-         //create flag wave animation and path
+         //create flag wave animation
          this.anims.create({
             key: "waveWin",
             frames: [
@@ -163,10 +160,11 @@ class Gameplay extends Phaser.Scene {
             hideOnComplete: false
         });
 
+        //create flage wave path
         this.winPath = new Phaser.Curves.Spline(this.winPoints);
          
 
-        //create blow up animation
+        //create enemy blow up animation
         this.anims.create({
             key: "blowedUp",
             frames: [
@@ -179,39 +177,39 @@ class Gameplay extends Phaser.Scene {
             hideOnComplete: true
         });
 
-        //make health bar
+        //create health bar
         for (let i = 0; i < 6; i++) {
+            //new sprite for both empty and full arrays
             let fullHeart = this.add.sprite(0, 6, 'healthFull').setOrigin(0).setScale(1.5);
             let emptyHeart = this.add.sprite(0, 6, 'healthEmpty').setOrigin(0).setScale(1.5);
 
-            fullHeart.visible = true;
+            fullHeart.visible = true; //start with full hearts visible
             emptyHeart.visible = false;
 
+            //push sprites to corresponding arrays
             my.sprite.fullHearts.push(fullHeart);
             my.sprite.emptyHearts.push(emptyHeart);
 
-            // Position the hearts horizontally
-            const offsetX = i * (fullHeart.displayWidth + 2); // Adjust as needed
+            //position the hearts horizontally
+            const offsetX = i * (fullHeart.displayWidth + 2);
             fullHeart.x = offsetX;
             emptyHeart.x = offsetX;
         }
 
 
-        // Set movement speeds (in pixels/tick)
+        //set movement speeds (in pixels/tick)
         this.playerSpeed = 7;
         this.bulletSpeed = 6;
 
 
-        // update HTML description
+        //update HTML description
         document.getElementById('description').innerHTML = '<h2>Intergalactics & Gastronomy: Food Frenzy!!</h2><br>A: left // D: right // Space: fire/emit'
 
 
-        // Put score on screen
+        //put score on screen
         my.text.score = this.add.bitmapText(game.config.width-10, 40, "minogram", ("00000" + myScore).slice(-5)).setOrigin(1).setScale(3).setLetterSpacing(1);
         // Put wave number on screen
         my.text.wave = this.add.bitmapText(game.config.width/2, 20, "minogram", "WAVE: " + (this.waveNum + 1)).setOrigin(0.5).setScale(2.2).setLetterSpacing(1);
-        // Put health on screen
-        //my.text.tempHealth = this.add.bitmapText(0 + 10, 5, "minogram", "HEALTH: " + (my.sprite.player.health)).setOrigin(0).setScale(2.5);
         
 
 
@@ -230,27 +228,31 @@ class Gameplay extends Phaser.Scene {
 
     }
 
+
+
+
+
+
+    //helper function for making enemies
     createEnemies(texture, projectileTexture, type, group, count)
     {
         for (let i = 0; i < count; i++)
             {
-                    let enemy = new Enemy(this, Phaser.Math.Between(30, game.config.width - 30), -20, texture, null, projectileTexture, type, Phaser.Math.Between(0, 10));
-                    group.add(enemy);
+                let enemy = new Enemy(this, Phaser.Math.Between(30, game.config.width - 30), -20, texture, null, projectileTexture, type); //create new enemy offscreen at random x value
+                group.add(enemy); //add to group
             }
 
     }
 
-    //
-    //helper functions for checking groups
     //get first inactive enemy in the group
     getFirstIA(group)
     {
         for (let enemy of group.getChildren()) {
         if (!enemy.active) {
-            return enemy; // Return the first inactive enemy
+            return enemy; //return the first inactive enemy
         }
     }
-    return null; // Return null if no inactive enemy is found
+    return null; //return null if no inactive enemy is found
     }
 
     //get the first active enemy in the group
@@ -258,18 +260,19 @@ class Gameplay extends Phaser.Scene {
     {
         for (let enemy of group.getChildren()) {
         if (enemy.active) {
-            return enemy; // Return the first active enemy
+            return enemy; //return the first active enemy
         }
     }
-    return null; // Return null if no inactive enemy is found
+    return null; //return null if no inactive enemy is found
     }
 
+    //check if all enemies are inactive
     allIA()
     {
         for (let enemyGroup of this.my.enemies.getChildren()){
             if (this.getFirstA(enemyGroup))
                 {
-                    return false;
+                    return false; //if any are active, return false
                 }
         }
         return true;
@@ -277,7 +280,9 @@ class Gameplay extends Phaser.Scene {
 
 
 
-    //add iteratives
+
+
+
     update() {
         let my = this.my;
 
@@ -290,11 +295,11 @@ class Gameplay extends Phaser.Scene {
         my.sprite.player.update();
 
 
-        // Check for bullet being fired
+        //check for bullet being fired
         if (Phaser.Input.Keyboard.JustDown(this.space)) {
-            // Are we under our bullet quota?
+            //if under the bullet max
             if (my.sprite.bullet.length < this.maxBullets) {
-                my.sprite.bullet.push(this.add.sprite(
+                my.sprite.bullet.push(this.add.sprite( //push sprite to bullet array
                     my.sprite.player.x, my.sprite.player.y-(my.sprite.player.displayHeight/2), "donut").setScale(1.5)
                 );
             }
@@ -304,35 +309,36 @@ class Gameplay extends Phaser.Scene {
         }
 
 
-        // filter offscreen bullets
+        //remove offscreen bullets
         my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
 
 
         //evilest
-        // Check for bullet collision with the enemy
+        //check for bullet collision with the enemy
         for (let bullet of my.sprite.bullet) {
             my.enemies.getChildren().forEach((enemyGroup) => {
-                for (let enemy of enemyGroup.getChildren()) {
-                    if (enemy.active == true && this.collides(enemy, bullet)) {
-                        enemy.health--;
-                        bullet.y = -100;
+                for (let enemy of enemyGroup.getChildren()) { //iterating over every enemy in every group
+                    if (enemy.active == true && this.collides(enemy, bullet)) { //if enemy is active and hit by a player bullet
+                        enemy.health--; //reduce enemy health
+                        bullet.y = -100; //move bullet offscreen to be destroyed
                         this.sound.play("enemyHit", {volume: 0.1});
+
                         //if collision reduces enemy health to 0
                         if (enemy.health == 0){
-                            // start animation
+                            //start animation
                             this.blowedUp = this.add.sprite(enemy.x, enemy.y, "explode01").setScale(1.75).play("blowedUp");
-                            // clear out bullet -- put y offscreen, will get reaped next update
+                            //make enemy inactive
                             enemy.makeInactive();
-                            // Update score
+                            //update score
                             myScore += enemy.scorePoints;
                             this.updateScore();
-                            // Play sound
+
                             this.sound.play("enemyDie", {volume: 0.25});}}
                             }
              });
         }
 
-        //run enemy update function
+        //run enemy update function on every enemy
         my.enemies.getChildren().forEach((enemyGroup) => {
             for (let enemy of enemyGroup.getChildren()) {
                 enemy.update();
@@ -342,14 +348,12 @@ class Gameplay extends Phaser.Scene {
         //check for enemy projectile collision with player
         my.enemies.getChildren().forEach((enemyGroup) => {
             for (let enemy of enemyGroup.getChildren()) {
-                //check every element in bullet array with y > game.config.height - 70
-                //check collides if true move bullet and reduce health
-                for (let bullet of enemy.my.sprite.projectile)
+                for (let proj of enemy.my.sprite.projectile)
                     {
-                        if (bullet.y > game.config.height - 70 && this.collides (my.sprite.player, bullet))
+                        if (proj.y > game.config.height - 70 && this.collides (my.sprite.player, proj)) //sweep only projectiles close to player, check if collides 
                             {
-                                bullet.y += 100;
-                                this.updateHealth();
+                                proj.y += 100; //move projectile offscreen
+                                this.updateHealth(); //reduce player health
                             }
 
              }
@@ -369,16 +373,9 @@ class Gameplay extends Phaser.Scene {
             }
         });
 
-        //move player bullet
+        //move player bullets
         for (let bullet of my.sprite.bullet) {
             bullet.y -= this.bulletSpeed;
-        }
-
-        //temp testing scenes transitions
-        if (Phaser.Input.Keyboard.JustDown(this.nextScene)) 
-        {
-            this.sound.play("wonSound", {volume: 0.25});
-            this.scene.start("endWin");
         }
 
         //if all enemies inactive, start the next wave
@@ -386,7 +383,7 @@ class Gameplay extends Phaser.Scene {
             this.updateWave();
         }
 
-        //if player.health <= 0, initiate loss
+        //if player.health <= 0, initiate loss sequence
         if (my.sprite.player.health <= 0 && this.gameEnd == false)
             {
                 this.loseGame();
@@ -394,12 +391,11 @@ class Gameplay extends Phaser.Scene {
         
     }
 
-    //
-    //
-    //helper functions for update
 
 
-    // A center-radius AABB collision check
+
+
+    //center-radius AABB collision check
     collides(a, b)
     {
         if (Math.abs(a.x - b.x) > (a.displayWidth/2 + b.displayWidth/2)) return false;
@@ -407,35 +403,41 @@ class Gameplay extends Phaser.Scene {
         return true;
     }
 
-
+    //update displayed score
     updateScore()
     {
         let my = this.my;
-        my.text.score.setText(("00000" + myScore).slice(-5));
+        my.text.score.setText(("00000" + myScore).slice(-5)); //update display
     }
 
+    //reduce health and update health bar
     updateHealth()
     {
         let my = this.my;
         my.sprite.player.health--;
         this.sound.play("playerHit", {volume: 0.25});
-        //my.text.tempHealth.setText("HEALTH: " + my.sprite.player.health);
+
+        //for each element in the health bar arrays
         for (let i = 0; i < 6; i++) {
 
-            my.sprite.fullHearts[i].visible = i < my.sprite.player.health;
-            my.sprite.emptyHearts[i].visible = i >= my.sprite.player.health;
+            my.sprite.fullHearts[i].visible = i < my.sprite.player.health; //if i is less than current player health, full heart is visible
+            my.sprite.emptyHearts[i].visible = i >= my.sprite.player.health; //if i is greater than current player health, empty heart is visible
         }
 
     }
 
+    //start the next wave and update displayed wave
     updateWave()
     {
         let my = this.my;
 
         this.sound.play("waveStart", {volume: 0.25});
-        this.waveNum++;
-            if (this.waveNum < 4){
-            my.text.wave.setText("WAVE: " + (this.waveNum + 1));
+        this.waveNum++; //increase wave number
+
+            if (this.waveNum < 4){ //only four waves in this game
+            my.text.wave.setText("WAVE: " + (this.waveNum + 1)); //update display
+
+            //activate enemies defined in waves configuration matrix
             for (let i = 0; i < 4 ; i++){
                 my.sprite.temp = my.enemies.getChildren()[i];
                 for (let j = 0; j < this.waves[this.waveNum][i]; j++)
@@ -443,17 +445,22 @@ class Gameplay extends Phaser.Scene {
                         my.sprite.temp.getChildren()[j].makeActive();
                     }
              }
-        } else {
+        } else { //if four waves completed, initiated win sequence
             this.winGame();
         }
     }
 
+
+    //win sequence
     winGame()
     {
+        //clarify that ending sequence is happening so it doesnt run more than once
         this.gameEnd = true;
-        // start follow animation on path
+
+        //make flag animation follow winPath
         this.waveFollower = this.add.follower(this.winPath, game.config.width/2, -10, "flag1").setScale(1.5);
 
+        //play animation and have it follow the path
         if (!this.waveFollower.isPlaying) {
         this.waveFollower.anims.play("waveWin");
         this.waveFollower.startFollow({
@@ -467,7 +474,7 @@ class Gameplay extends Phaser.Scene {
            });
         }
 
-        //when animation is done, go to next scene
+        //when animation is done, go to won screen
         this.waveFollower.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
             this.sound.play("wonSound", {volume: 0.25});
             this.scene.start("endWin");
@@ -476,25 +483,33 @@ class Gameplay extends Phaser.Scene {
 
     }
 
+    //loss sequence
     loseGame()
     {
+        //clarify that ending sequence is happening so it doesnt run more than once
         this.gameEnd = true;
+
         this.sound.play("lostSound", {volume: 0.25});
+        //go to lost screen
         this.scene.start("endLose");
     }
 
+    //reset game values
     init_game()
     {
         let my = this.my;
 
-
+        //set current score to zero
         myScore = 0;
         this.updateScore();
+        
+        //reset player position
         this.my.sprite.player.x = game.config.width/2;
 
-
+        //reset current wave
         this.waveNum = 0;
-        //reset waves
+
+        //create new wave configurations
         this.waves = [
             //format: [#charas, #rigels, #enifs, #polluxes]
             [0, Phaser.Math.Between(0, 1), 0, Phaser.Math.Between(2, 5)], //wave 0
@@ -504,9 +519,13 @@ class Gameplay extends Phaser.Scene {
 
         ];
 
+        //ending sequence is no longer occuring
         this.gameEnd = false;
     }
 
+
+
+    
 }
        
 

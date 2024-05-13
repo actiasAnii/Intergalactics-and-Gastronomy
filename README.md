@@ -1,12 +1,24 @@
-**Bullet Time**
+**Intergalactics & Gastronomy: Food Frenzy!!**
 
-Multiple examples of how to implement gallery shooter style bullet shooting in Phaser 3
-without using Arcade Physics.
+A silly gallery shooter game themed around aliens having a food fight :)
 
-* Single bullet
-* Variable size array of bullet sprites
-* Fixed size array of bullet sprites
-* Group object for bullets
-* Using a sprite subclass for the player avatar and bullets, also uses group objects
+Made by Anais Montes for CMPM 120 at UCSC
 
-Uses [Kenny Assets](https://kenney.nl/assets/), with gratitude.
+
+Thank you very much to the creators of the assets and templates used in this project!
+
+Art and Sound Assets from Kenny Assets https://kenney.nl/assets/
+
+art: 
+- Kenny Pixel Platformer (https://kenney.nl/assets/pixel-platformer)
+- Kenny Pixel Platformer Food Expansion (https://kenney.nl/assets/pixel-platformer-food-expansion)
+- Kenny Pixel Shmup (https://kenney.nl/assets/pixel-shmup)
+
+audio:
+- Kenny Sci Fi Sounds (https://kenney.nl/assets/sci-fi-sounds)
+- Kenny Music Jingles (https://kenney.nl/assets/music-jingles)
+
+font:
+- FrostyFreeze Public Domain Bitmap Minogram 6x10 (https://frostyfreeze.itch.io/pixel-bitmap-fonts-png-xml)
+
++ Basic template forked from Jim Whitehead's Bullet Time (https://github.com/JimWhiteheadUCSC/BulletTime/tree/master)
