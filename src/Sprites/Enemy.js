@@ -26,9 +26,9 @@ class Enemy extends Phaser.GameObjects.Sprite
 
                 this.points = [
                     x, y,
-                    scene.game.config.width - 20, scene.game.config.height/4,
-                    20, scene.game.config.height/2,
-                    scene.game.config.width - 20, scene.game.config.height/2 + scene.game.config.height/4,
+                    scene.game.config.width - 40, scene.game.config.height/4,
+                    40, scene.game.config.height/2,
+                    scene.game.config.width - 40, scene.game.config.height/2 + scene.game.config.height/4,
                     x, scene.game.config.height + this.displayHeight
         
                 ];
@@ -56,7 +56,7 @@ class Enemy extends Phaser.GameObjects.Sprite
                 this.health = 2;
                 this.baseHealth = 2;
                 this.scorePoints = 25;
-                this.enemySpeed = Phaser.Math.Between(6500, 9000);
+                this.enemySpeed = Phaser.Math.Between(8000, 10000);
                 this.repeat = 0;
                 this.yoyo = false;
 
@@ -84,7 +84,7 @@ class Enemy extends Phaser.GameObjects.Sprite
                 this.health = 2;
                 this.baseHealth = 3;
                 this.scorePoints = 10;
-                this.enemySpeed = Phaser.Math.Between(8000, 10000);
+                this.enemySpeed = Phaser.Math.Between(10000, 12000);
                 this.repeat = 0;
                 this.yoyo = false;
 
@@ -103,7 +103,7 @@ class Enemy extends Phaser.GameObjects.Sprite
         this.my.sprite.projectile = [];  
         this.maxproj = 20;
 
-        this.cooldown = Phaser.Math.Between(35, 60);
+        this.cooldown = Phaser.Math.Between(50, 100);
 
         //make appropriate curve and add sprite as follower
         this.curve = new Phaser.Curves.Spline(this.points);
@@ -143,14 +143,14 @@ class Enemy extends Phaser.GameObjects.Sprite
             {
                 if (my.sprite.projectile.length < this.maxproj) {
                     my.sprite.projectile.push(this.scene.add.sprite(
-                        this.x, this.y-(this.displayHeight/2), this.projectileTexture).setScale(1.25)
+                        this.x, this.y-(this.displayHeight/2), this.projectileTexture).setScale(1)
                     );
 
 
                     this.scene.sound.play("enemyShoot", {
                         volume: 0.25
                     });
-                    this.cooldown = 50;
+                    this.cooldown = Phaser.Math.Between(50, 100);
                 }
             }
 
@@ -164,13 +164,6 @@ class Enemy extends Phaser.GameObjects.Sprite
             return projectile.y < this.scene.game.config.height + this.displayHeight/2;
         });
         }
-
-        //make inactive if outside of bounds
-
-        if (this.y >= this.scene.game.config.height + this.displayHeight/2)
-            {
-                this.makeInactive();
-            }
 
 
     }

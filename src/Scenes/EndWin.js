@@ -19,8 +19,13 @@ class EndWin extends Phaser.Scene {
 
         this.nextScene = this.input.keyboard.addKey("N");
 
-        my.text.won = this.add.bitmapText(game.config.width/2, game.config.height/2 - 200, "minogram", "YOU WON!").setOrigin(0.5).setScale(4);
-        my.text.reportScoreW = this.add.bitmapText(game.config.width/2, game.config.height/2, "minogram", "SCORE: " + ("00000" + myScore).slice(-5)).setOrigin(0.5).setScale(2.5);
+        if (myScore > highScore){
+            highScore = myScore;
+        }
+
+        my.text.won = this.add.bitmapText(game.config.width/2, game.config.height/2 - 250, "minogram", "YOU WON!").setOrigin(0.5).setScale(4);
+        my.text.reportScoreW = this.add.bitmapText(game.config.width/2, game.config.height/2 - 50, "minogram", "YOUR SCORE: " + ("00000" + myScore).slice(-5)).setOrigin(0.5).setScale(2.5);
+        my.text.reportHighScoreW = this.add.bitmapText(game.config.width/2, game.config.height/2 + 50, "minogram", "HIGH SCORE: " + ("00000" + highScore).slice(-5)).setOrigin(0.5).setScale(2.5);
         my.text.playAgainW = this.add.bitmapText(game.config.width/2, game.config.height/2 + 200, "minogram", "press N to play again!").setOrigin(0.5).setScale(2.5);
 
     }
@@ -30,6 +35,7 @@ class EndWin extends Phaser.Scene {
         let my = this.my;
 
         if (Phaser.Input.Keyboard.JustDown(this.nextScene)) {
+            this.sound.play("lostSound", {volume: 0.25});
             this.scene.start("endLose");
         }
 
